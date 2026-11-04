@@ -25,11 +25,21 @@ import type { PurchasedBikeModel } from "./models/purchased-bike.model";
 export class CustomersRepository {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
-  async findAll(): Promise<CustomerModel[]> {
-    const entities = await this.dataSource
+  async findAll(
+    page = 1,
+    limit = 10,
+  ): Promise<{ totalCount: number; customers: CustomerModel[] }> {
+    const [entities, totalCount] = await this.dataSource
       .getRepository(CustomerEntity)
-      .find({ order: { lastName: "ASC", firstName: "ASC", id: "ASC" } });
-    return entities.map((entity) => this.toCustomerModel(entity));
+      .findAndCount({
+        order: { lastName: "ASC", firstName: "ASC", id: "ASC" },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+    return {
+      totalCount,
+      customers: entities.map((entity) => this.toCustomerModel(entity)),
+    };
   }
 
   async findById(id: string): Promise<CustomerModel | null> {

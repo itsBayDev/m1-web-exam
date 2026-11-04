@@ -1,10 +1,7 @@
-import axios from "axios";
-import { useState } from "react";
-import type {
-  CustomerModel,
-  UpdateCustomerModel,
-} from "../models/CustomerModel";
-import type { PurchaseModel } from "../models/PurchaseModel";
+import axios from 'axios';
+import { useCallback, useState } from 'react';
+import type { CustomerModel, UpdateCustomerModel } from '../models/CustomerModel';
+import type { PurchaseModel } from '../models/PurchaseModel';
 
 export const useCustomerDetailsProvider = (customerId: string) => {
   const [customer, setCustomer] = useState<CustomerModel | null>(null);
@@ -12,34 +9,31 @@ export const useCustomerDetailsProvider = (customerId: string) => {
   const [purchases, setPurchases] = useState<PurchaseModel[]>([]);
   const [isPurchasesLoading, setIsPurchasesLoading] = useState<boolean>(true);
 
-  const load = () => {
+  const load = useCallback(() => {
     setIsLoading(true);
     axios
       .get(`http://localhost:3000/customers/${customerId}`)
-      .then((result) => setCustomer(result.data))
+      .then(result => setCustomer(result.data))
       .finally(() => {
         setIsLoading(false);
       });
-  };
+  }, [customerId]);
 
-  const loadPurchases = () => {
+  const loadPurchases = useCallback(() => {
     setIsPurchasesLoading(true);
     axios
       .get(`http://localhost:3000/customers/${customerId}/bikes`)
-      .then((result) => setPurchases(result.data))
+      .then(result => setPurchases(result.data))
       .finally(() => {
         setIsPurchasesLoading(false);
       });
-  };
+  }, [customerId]);
 
   // Returns the request so the caller can react to errors
   const updateCustomer = (input: UpdateCustomerModel) =>
     axios
-      .patch<CustomerModel>(
-        `http://localhost:3000/customers/${customerId}`,
-        input,
-      )
-      .then((result) => setCustomer(result.data));
+      .patch<CustomerModel>(`http://localhost:3000/customers/${customerId}`, input)
+      .then(result => setCustomer(result.data));
 
   return {
     customer,

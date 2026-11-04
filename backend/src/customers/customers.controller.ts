@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -9,6 +10,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from "@nestjs/common";
 import { CustomersService } from "./customers.service";
 import {
@@ -24,6 +26,11 @@ import type {
   UpdateCustomerModel,
 } from "./models/customer.model";
 
+interface CustomerPageResponseDto {
+  totalCount: number;
+  customers: CustomerResponseDto[];
+}
+
 @Controller("customers")
 export class CustomersController {
   constructor(
@@ -31,10 +38,19 @@ export class CustomersController {
   ) {}
 
   @Get()
-  async findAll(): Promise<CustomerResponseDto[]> {
-    return (await this.service.findAll()).map((model) =>
-      CustomerResponseDto.fromModel(model),
-    );
+  async findAll(
+    @Query("page") page?: string,
+    @Query("limit") limit?: string,
+  ): Promise<CustomerPageResponseDto> {
+    const parsedPage = this.parsePositiveInteger(page, 1, "page");
+    const parsedLimit = this.parsePositiveInteger(limit, 10, "limit", 50);
+    const payload = await this.service.findAll(parsedPage, parsedLimit);
+    return {
+      totalCount: payload.totalCount,
+      customers: payload.customers.map((model) =>
+        CustomerResponseDto.fromModel(model),
+      ),
+    };
   }
 
   @Post()
@@ -105,5 +121,24 @@ export class CustomersController {
         quantity: dto.quantity,
       }),
     );
+  }
+
+  private parsePositiveInteger(
+    value: string | undefined,
+    defaultValue: number,
+    label: "page" | "limit",
+    max?: number,
+  ): number {
+    const raw = value ?? String(defaultValue);
+    if (!/^[1-9]\d*$/.test(raw)) {
+      throw new BadRequestException(`${label} must be a positive integer`);
+    }
+    const parsed = Number(raw);
+    if (max !== undefined && parsed > max) {
+      throw new BadRequestException(
+        `${label} must not exceed ${max}`,
+      );
+    }
+    return parsed;
   }
 }

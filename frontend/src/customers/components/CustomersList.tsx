@@ -1,31 +1,43 @@
-import { Skeleton, Space } from "antd";
-import { useEffect } from "react";
-import { useCustomersProvider } from "../providers/useCustomersProvider";
-import { AddCustomerButton } from "./AddCustomerButton";
-import { CustomerListItem } from "./CustomerListItem";
+import { Pagination, Skeleton, Space } from 'antd';
+import { useCallback, useEffect } from 'react';
+import { useCustomersProvider } from '../providers/useCustomersProvider';
+import { AddCustomerButton } from './AddCustomerButton';
+import { CustomerListItem } from './CustomerListItem';
 
 export const CustomersList = () => {
-  const { customers, deleteCustomer, createCustomer, isLoading, load } =
+  const { customers, totalCount, page, pageSize, deleteCustomer, createCustomer, isLoading, load } =
     useCustomersProvider();
 
+  const loadPage = useCallback(() => load(), [load]);
+
   useEffect(() => {
-    load();
-  }, []);
+    loadPage();
+  }, [loadPage]);
 
   return (
-    <Space orientation="vertical" style={{ padding: ".25rem .5rem" }}>
+    <Space orientation='vertical' style={{ padding: '.25rem .5rem' }}>
       <AddCustomerButton createCustomer={createCustomer} />
-      {isLoading ? (
+      {isLoading ?
         <Skeleton />
-      ) : (
-        customers.map((customer) => (
-          <CustomerListItem
-            key={customer.id}
-            customer={customer}
-            deleteCustomer={deleteCustomer}
+      : <>
+          {customers.map(customer => (
+            <CustomerListItem
+              key={customer.id}
+              customer={customer}
+              deleteCustomer={deleteCustomer}
+            />
+          ))}
+          <Pagination
+            current={page}
+            pageSize={pageSize}
+            total={totalCount}
+            onChange={(nextPage, nextPageSize) => {
+              load(nextPage, nextPageSize);
+            }}
+            showSizeChanger={false}
           />
-        ))
-      )}
+        </>
+      }
     </Space>
   );
 };

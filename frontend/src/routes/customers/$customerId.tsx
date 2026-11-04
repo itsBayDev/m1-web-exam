@@ -1,11 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { CustomerDetailsPage } from "../../customers/pages/CustomerDetailsPage";
+import { createFileRoute } from '@tanstack/react-router';
+import { CustomerDetailsRouteComponent } from '../../customers/pages/CustomerDetailsRoute';
 
-export const Route = createFileRoute("/customers/$customerId")({
-  component: RouteComponent,
+export const Route = createFileRoute('/customers/$customerId')({
+  component: CustomerDetailsRouteComponent,
 });
-
-function RouteComponent() {
-  const { customerId } = Route.useParams();
-  return <CustomerDetailsPage customerId={customerId} />;
-}
